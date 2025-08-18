@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Remove Blank Lines</title>
+  <title>Auto-Clean Blank Lines</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,29 +14,25 @@
       height: 200px;
       margin-bottom: 1em;
     }
-    button {
-      padding: 0.5em 1em;
-      font-size: 1em;
-    }
   </style>
 </head>
 <body>
-  <h1>Remove Blank Lines</h1>
+  <h1>Auto-Clean Blank Lines</h1>
   <textarea id="inputText" placeholder="Paste your text here..."></textarea>
-  <br />
-  <button onclick="removeBlankLines()">Clean Text</button>
-  <h2>Result:</h2>
+  <h2>Cleaned Output:</h2>
   <textarea id="outputText" readonly></textarea>
 
   <script>
-    function removeBlankLines() {
-      const input = document.getElementById("inputText").value;
-      const cleaned = input
+    const inputText = document.getElementById("inputText");
+    const outputText = document.getElementById("outputText");
+
+    inputText.addEventListener("input", () => {
+      const cleaned = inputText.value
         .split("\n")
         .filter(line => line.trim() !== "")
         .join("\n");
-      document.getElementById("outputText").value = cleaned;
-    }
+      outputText.value = cleaned;
+    });
   </script>
 </body>
 </html>
