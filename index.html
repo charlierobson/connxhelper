@@ -30,18 +30,22 @@
 <body>
   <h1>Paste Text to Create Draggable List</h1>
   <textarea id="inputText" placeholder="Paste your text here..."></textarea>
-  <ul id="listContainer"></ul>
+  <ul id="listContainer" style="display:none;"></ul>
 
   <!-- SortableJS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></onst inputText = document.getElementById("inputText");
     const listContainer = document.getElementById("listContainer");
 
     inputText.addEventListener("paste", (event) => {
+      // Wait for paste to complete
       setTimeout(() => {
-        const lines = inputText.value
+        const pastedText = inputText.value;
+        const lines = pastedText
           .split("\n")
           .map(line => line.trim())
           .filter(line => line !== "");
+
+        if (lines.length === 0) return;
 
         listContainer.innerHTML = "";
         lines.forEach(line => {
@@ -50,13 +54,13 @@
           listContainer.appendChild(li);
         });
 
-        // Make the list sortable
         Sortable.create(listContainer, {
           animation: 150
         });
 
-        inputText.style.display = "none"; // Hide textarea after paste
-      }, 100); // Delay to allow paste to complete
+        inputText.style.display = "none";
+        listContainer.style.display = "block";
+      }, 50); // Short delay to allow paste to complete
     });
   </script>
 </body>
