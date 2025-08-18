@@ -1,1 +1,42 @@
-Hello World
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Remove Blank Lines</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2em;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      margin-bottom: 1em;
+    }
+    button {
+      padding: 0.5em 1em;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Remove Blank Lines</h1>
+  <textarea id="inputText" placeholder="Paste your text here..."></textarea>
+  <br />
+  <button onclick="removeBlankLines()">Clean Text</button>
+  <h2>Result:</h2>
+  <textarea id="outputText" readonly></textarea>
+
+  <script>
+    function removeBlankLines() {
+      const input = document.getElementById("inputText").value;
+      const cleaned = input
+        .split("\n")
+        .filter(line => line.trim() !== "")
+        .join("\n");
+      document.getElementById("outputText").value = cleaned;
+    }
+  </script>
+</body>
+</html>
