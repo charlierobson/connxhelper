@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Auto-Clean Blank Lines</title>
+  <title>Draggable List from Pasted Text</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,28 +11,26 @@
     }
     textarea {
       width: 100%;
-      height: 200px;
+      height: 150px;
       margin-bottom: 1em;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 10px;
+      margin: 5px 0;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      cursor: move;
     }
   </style>
 </head>
 <body>
-  <h1>Auto-Clean Blank Lines</h1>
+  <h1>Paste Text to Create Draggable List</h1>
   <textarea id="inputText" placeholder="Paste your text here..."></textarea>
-  <h2>Cleaned Output:</h2>
-  <textarea id="outputText" readonly></textarea>
+  <ul id="listContainer"></ul>
 
-  <script>
-    const inputText = document.getElementById("inputText");
-    const outputText = document.getElementById("outputText");
-
-    inputText.addEventListener("input", () => {
-      const cleaned = inputText.value
-        .split("\n")
-        .filter(line => line.trim() !== "")
-        .join("\n");
-      outputText.value = cleaned;
-    });
-  </script>
-</body>
-</html>
+  <!-- SortableJS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></onst inputText = document.getElementById("input
