@@ -33,4 +33,31 @@
   <ul id="listContainer"></ul>
 
   <!-- SortableJS CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></onst inputText = document.getElementById("input
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></onst inputText = document.getElementById("inputText");
+    const listContainer = document.getElementById("listContainer");
+
+    inputText.addEventListener("paste", (event) => {
+      setTimeout(() => {
+        const lines = inputText.value
+          .split("\n")
+          .map(line => line.trim())
+          .filter(line => line !== "");
+
+        listContainer.innerHTML = "";
+        lines.forEach(line => {
+          const li = document.createElement("li");
+          li.textContent = line;
+          listContainer.appendChild(li);
+        });
+
+        // Make the list sortable
+        Sortable.create(listContainer, {
+          animation: 150
+        });
+
+        inputText.style.display = "none"; // Hide textarea after paste
+      }, 100); // Delay to allow paste to complete
+    });
+  </script>
+</body>
+</html>
