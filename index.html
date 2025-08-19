@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Connections Helper</title>
+  <title>4x4 Reorderable Tiles</title>
   <style>
     :root {
       --gap: 12px;
@@ -48,6 +48,7 @@
       color: var(--tile-fg);
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       transition: transform .12s ease, background .12s ease, box-shadow .12s ease, outline-color .12s ease;
+      touch-action: none; /* Prevent default scrolling during drag */
     }
 
     .tile[draggable="true"] { cursor: grab; }
@@ -61,7 +62,8 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>Connections Helper</h1>
+    <h1>Reorderable 4×4 Tiles</h1>
+    <p>Paste text lines below (blank lines will be removed). Up to 16 lines are used as tiles.</p>
 
     <textarea id="inputText" placeholder="Paste your lines here..."></textarea>
 
@@ -69,6 +71,7 @@
       <button id="loadBtn" aria-label="Load tiles from text">Load Tiles</button>
       <button id="shuffleBtn" aria-label="Shuffle tiles">Shuffle</button>
       <button id="resetBtn" aria-label="Reset to original order">Reset</button>
+      <button id="clearBtn" aria-label="Clear input and grid">Clear</button>
     </div>
 
     <div id="grid" class="grid" role="list" aria-label="Reorderable grid of tiles"></div>
@@ -84,6 +87,7 @@
       const shuffleBtn = document.getElementById('shuffleBtn');
       const resetBtn = document.getElementById('resetBtn');
       const loadBtn = document.getElementById('loadBtn');
+      const clearBtn = document.getElementById('clearBtn');
       const inputText = document.getElementById('inputText');
 
       const defaultOrder = Array.from({ length: 16 }, () => "");
@@ -91,7 +95,6 @@
       let currentOrder = [...originalOrder];
       let clickSelected = null;
       let kbSelected = null;
-      let touchStartTile = null;
 
       function render(order) {
         grid.innerHTML = '';
@@ -120,18 +123,38 @@
             swapValues(fromIndex, toIndex);
           });
 
-          // Touch support: tap-hold and drag simulation
+          // Touch support: drag simulation with touchmove
+          let touchId = null;
           tile.addEventListener('touchstart', e => {
-            touchStartTile = tile;
+            if (touchId !== null) return;
+            touchId = e.changedTouches[0].identifier;
+            tile.classList.add('dragging');
+          });
+
+          tile.addEventListener('touchmove', e => {
+            const touch = Array.from(e.changedTouches).find(t => t.identifier === touchId);
+            if (!touch) return;
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            const dropTile = target && target.closest('.tile');
+            grid.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+            if (dropTile && dropTile !== tile) {
+              dropTile.classList.add('drop-target');
+            }
           });
 
           tile.addEventListener('touchend', e => {
-            if (touchStartTile && touchStartTile !== tile) {
-              const fromIndex = parseInt(touchStartTile.dataset.index);
-              const toIndex = parseInt(tile.dataset.index);
+            const touch = Array.from(e.changedTouches).find(t => t.identifier === touchId);
+            if (!touch) return;
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            const dropTile = target && target.closest('.tile');
+            grid.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+            tile.classList.remove('dragging');
+            if (dropTile && dropTile !== tile) {
+              const fromIndex = parseInt(tile.dataset.index);
+              const toIndex = parseInt(dropTile.dataset.index);
               swapValues(fromIndex, toIndex);
             }
-            touchStartTile = null;
+            touchId = null;
           });
 
           tile.addEventListener('click', () => {
@@ -215,9 +238,17 @@
         render(currentOrder);
       }
 
+      function clearAll() {
+        inputText.value = "";
+        originalOrder = [...defaultOrder];
+        currentOrder = [...defaultOrder];
+        render(currentOrder);
+      }
+
       shuffleBtn.addEventListener('click', shuffle);
       resetBtn.addEventListener('click', reset);
       loadBtn.addEventListener('click', loadFromText);
+      clearBtn.addEventListener('click', clearAll);
 
       render(currentOrder);
     })();
