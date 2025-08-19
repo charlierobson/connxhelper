@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Draggable List from Pasted Text 2</title>
+  <title>Draggable List from Pasted Text</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -25,22 +25,29 @@
       border: 1px solid #ccc;
       cursor: move;
     }
+    button {
+      margin-top: 1em;
+      padding: 0.5em 1em;
+      font-size: 1em;
+    }
   </style>
 </head>
 <body>
-  <h1>Paste Text to Create Draggable List 2</h1>
+  <h1>Paste Text to Create Draggable List</h1>
   <textarea id="inputText" placeholder="Paste your text here..."></textarea>
-  <ul id="listContainer" style="display:none;"></ul>
+  <listContainer" style="display:none;"></ul>
+  <button id="resetButton" style="display:none;">Reset</button>
 
   <!-- SortableJS CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></onst inputText = document.getElementById("inputText");
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1e.min.js
+  <script>
+    const inputText = document.getElementById("inputText");
     const listContainer = document.getElementById("listContainer");
+    const resetButton = document.getElementById("resetButton");
 
-    inputText.addEventListener("paste", (event) => {
-      // Wait for paste to complete
+    inputText.addEventListener("paste", () => {
       setTimeout(() => {
-        const pastedText = inputText.value;
-        const lines = pastedText
+        const lines = inputText.value
           .split("\n")
           .map(line => line.trim())
           .filter(line => line !== "");
@@ -60,7 +67,16 @@
 
         inputText.style.display = "none";
         listContainer.style.display = "block";
-      }, 50); // Short delay to allow paste to complete
+        resetButton.style.display = "inline-block";
+      }, 50);
+    });
+
+    resetButton.addEventListener("click", () => {
+      inputText.value = "";
+      inputText.style.display = "block";
+      listContainer.style.display = "none";
+      resetButton.style.display = "none";
+      listContainer.innerHTML = "";
     });
   </script>
 </body>
