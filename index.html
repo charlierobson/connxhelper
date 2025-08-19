@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Draggable List from Pasted Text</title>
+  <title>Draggable List from Pasted Text 4</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -33,47 +33,50 @@
   </style>
 </head>
 <body>
-  <h1>Paste Text to Create Draggable List</h1>
+  <h1>Paste Text to Create Draggable List 4</h1>
   <textarea id="inputText" placeholder="Paste your text here..."></textarea>
-  <listContainer" style="display:none;"></ul>
+  <br />
+  <button id="processButton">Process Text</button>
   <button id="resetButton" style="display:none;">Reset</button>
+  <ul id="listContainer" style="display:none;"></ul>
 
   <!-- SortableJS CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1e.min.js
+  https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js
   <script>
     const inputText = document.getElementById("inputText");
-    const listContainer = document.getElementById("listContainer");
+    const processButton = document.getElementById("processButton");
     const resetButton = document.getElementById("resetButton");
+    const listContainer = document.getElementById("listContainer");
 
-    inputText.addEventListener("paste", () => {
-      setTimeout(() => {
-        const lines = inputText.value
-          .split("\n")
-          .map(line => line.trim())
-          .filter(line => line !== "");
+    processButton.addEventListener("click", () => {
+      const lines = inputText.value
+        .split("\n")
+        .map(line => line.trim())
+        .filter(line => line !== "");
 
-        if (lines.length === 0) return;
+      if (lines.length === 0) return;
 
-        listContainer.innerHTML = "";
-        lines.forEach(line => {
-          const li = document.createElement("li");
-          li.textContent = line;
-          listContainer.appendChild(li);
-        });
+      listContainer.innerHTML = "";
+      lines.forEach(line => {
+        const li = document.createElement("li");
+        li.textContent = line;
+        listContainer.appendChild(li);
+      });
 
-        Sortable.create(listContainer, {
-          animation: 150
-        });
+      Sortable.create(listContainer, {
+        animation: 150
+      });
 
-        inputText.style.display = "none";
-        listContainer.style.display = "block";
-        resetButton.style.display = "inline-block";
-      }, 50);
+      inputText.style.display = "none";
+      processButton.style.display = "none";
+      listContainer.style.display = "block";
+      resetButton.style.display = "inline-block";
     });
 
     resetButton.addEventListener("click", () => {
       inputText.value = "";
       inputText.style.display = "block";
+      processButton.style.display = "inline-block";
       listContainer.style.display = "none";
       resetButton.style.display = "none";
       listContainer.innerHTML = "";
