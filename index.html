@@ -1,70 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Sortable 4x4 Grid with Touch Support 2</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>4x4 Reorderable Tiles</title>
   <style>
-    body {
-      font-family: sans-serif;
-      display: flex;
-      justify-content: center;
-      margin-top: 50px;
-      touch-action: manipulation; /* Improves touch responsiveness */
+    :root {
+      --gap: 12px;
+      --tile-bg: #f5f5f7;
+      --tile-fg: #111827;
+      --tile-active: #e0e7ff;
+      --tile-border: #e5e7eb;
     }
 
-    #grid {
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: #fff; color: #111; }
+
+    .wrap { max-width: 680px; margin: 40px auto; padding: 0 16px; }
+
+    h1 { font-size: 20px; margin: 0 0 12px; font-weight: 700; }
+    p  { margin: 0 0 16px; color: #4b5563; }
+
+    .controls { display: flex; gap: 8px; margin: 12px 0 16px; flex-wrap: wrap; }
+    button { cursor: pointer; border: 1px solid #e5e7eb; background: #fff; padding: 8px 12px; border-radius: 10px; font-weight: 600; }
+    button:active { transform: translateY(1px); }
+
+    textarea { width: 100%; height: 100px; border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px; font-family: inherit; resize: vertical; }
+
+    .grid {
       display: grid;
-      grid-template-columns: repeat(4, 100px);
-      grid-gap: 10px;
-      width: max-content;
-    }
-
-    .grid-item {
-      background-color: #4CAF50;
-      color: white;
-      padding: 20px;
-      text-align: center;
-      border-radius: 5px;
-      cursor: grab;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--gap);
       user-select: none;
-      /* touch-action: none; Prevents scrolling during drag */
     }
 
-    .sortable-ghost {
-      opacity: 0.4;
+    .tile {
+      aspect-ratio: 1/1;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 14px;
+      background: var(--tile-bg);
+      border: 1px solid var(--tile-border);
+      color: var(--tile-fg);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: transform .12s ease, background .12s ease, box-shadow .12s ease, outline-color .12s ease;
     }
+
+    .tile[draggable="true"] { cursor: grab; }
+    .tile.dragging { opacity: .6; transform: scale(.98); }
+    .tile.drop-target { outline: 3px dashed #93c5fd; outline-offset: -6px; }
+    .tile.selected { background: var(--tile-active); box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+
+    footer { margin-top: 16px; font-size: 12px; color: #6b7280; }
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 6px; border: 1px solid #e5e7eb; }
   </style>
 </head>
 <body>
-griddy
-<div id="grid">
-  <!-- 16 items -->
-  <div class="grid-item">1</div>
-  <div class="grid-item">2</div>
-  <div class="grid-item">3</div>
-  <div class="grid-item">4</div>
-  <div class="grid-item">5</div>
-  <div class="grid-item">6</div>
-  <div class="grid-item">7</div>
-  <div class="grid-item">8</div>
-  <div class="grid-item">9</div>
-  <div class="grid-item">10</div>
-  <div class="grid-item">11</div>
-  <div class="grid-item">12</div>
-  <div class="grid-item">13</div>
-  <div class="grid-item">14</div>
-  <div class="grid-item">15</div>
-  <div class="grid-item">16</div>
-</div>
+  <div class="wrap">
+    <h1>Reorderable 4×4 Tiles</h1>
+    <p>Paste text lines below (blank lines will be removed). Up to 16 lines are used as tiles.</p>
 
-<!-- Sortable.js CDN -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></scripte(document.getElementById('grid'), {
-    animation: 150,
-    ghostClass: 'sortable-ghost',
-    touchStartThreshold: 5 // Helps with touch sensitivity
-  });
-</script>
+    <textarea id="inputText" placeholder="Paste your lines here..."></textarea>
 
+    <div class="controls">
+      <button id="loadBtn" aria-label="Load tiles from text">Load Tiles</button>
+      <button id="shuffleBtn" aria-label="Shuffle tiles">Shuffle</button>
+      <button id="resetBtn" aria-label="Reset to original order">Reset</button>
+    </div>
+
+    <div id="grid" class="grid" role="list" aria-label="Reorderable grid of tiles"></div>
+
+    <footer>
+      Tip: Use <span class="kbd">Tab</span> to focus a tile and <span class="kbd">Space</span> to select; use arrow keys to move selection, then <span class="kbd">Enter</span> to swap.
+    </footer>
+  </div>
+
+  <script>
+    (function() {
+      const grid = document.getElementById('grid');
+      const shuffleBtn = document.getElementById('shuffleBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const loadBtn = document.getElementById('loadBtn');
+      const inputText = document.getElementById('inputText');
+
+      const defaultOrder = Array.from({ length: 16 }, () => "");
+      let originalOrder = [...defaultOrder];
+      let currentOrder = [...originalOrder];
+      let clickSelected = null;
+      let kbSelected = null;
+
+      function render(order) {
+        grid.innerHTML = '';
+        order.forEach((text, i) => {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          tile.textContent = text;
+          tile.setAttribute('role', 'listitem');
+          tile.setAttribute('tabindex', '0');
+          tile.setAttribute('draggable', 'true');
+          tile.dataset.index = i;
+
+          tile.addEventListener('dragstart', e => {
+            tile.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', tile.dataset.index);
+            e.dataTransfer.effectAllowed = 'move';
+          });
+          tile.addEventListener('dragend', () => tile.classList.remove('dragging'));
+          tile.addEventListener('dragover', e => { e.preventDefault(); tile.classList.add('drop-target'); });
+          tile.addEventListener('dragleave', () => tile.classList.remove('drop-target'));
+          tile.addEventListener('drop', e => {
+            e.preventDefault();
+            tile.classList.remove('drop-target');
+            const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+            const toIndex = parseInt(tile.dataset.index);
+            swapValues(fromIndex, toIndex);
+          });
+
+          tile.addEventListener('click', () => {
+            if (!clickSelected) {
+              clickSelected = tile;
+              tile.classList.add('selected');
+            } else if (clickSelected === tile) {
+              tile.classList.remove('selected');
+              clickSelected = null;
+            } else {
+              const fromIndex = parseInt(clickSelected.dataset.index);
+              const toIndex = parseInt(tile.dataset.index);
+              clickSelected.classList.remove('selected');
+              clickSelected = null;
+              swapValues(fromIndex, toIndex);
+            }
+          });
+
+          tile.addEventListener('keydown', e => {
+            const index = Array.from(grid.children).indexOf(tile);
+            const col = index % 4;
+            const row = Math.floor(index / 4);
+
+            if (e.code === 'Space') {
+              e.preventDefault();
+              if (kbSelected === tile) { tile.classList.remove('selected'); kbSelected = null; }
+              else { if (kbSelected) kbSelected.classList.remove('selected'); kbSelected = tile; tile.classList.add('selected'); }
+            }
+
+            if (e.code === 'Enter' && kbSelected && kbSelected !== tile) {
+              e.preventDefault();
+              swapValues(parseInt(kbSelected.dataset.index), parseInt(tile.dataset.index));
+              kbSelected.classList.remove('selected');
+              kbSelected = null;
+            }
+
+            const moveFocus = (newIndex) => {
+              const el = grid.children[newIndex];
+              if (el) el.focus();
+            };
+
+            switch (e.code) {
+              case 'ArrowRight': e.preventDefault(); moveFocus(Math.min(index + 1, 15)); break;
+              case 'ArrowLeft':  e.preventDefault(); moveFocus(Math.max(index - 1, 0)); break;
+              case 'ArrowDown':  e.preventDefault(); moveFocus(Math.min(index + 4, 15)); break;
+              case 'ArrowUp':    e.preventDefault(); moveFocus(Math.max(index - 4, 0)); break;
+            }
+          });
+
+          grid.appendChild(tile);
+        });
+      }
+
+      function swapValues(aIndex, bIndex) {
+        if (aIndex === bIndex) return;
+        const tmp = currentOrder[aIndex];
+        currentOrder[aIndex] = currentOrder[bIndex];
+        currentOrder[bIndex] = tmp;
+        render(currentOrder);
+      }
+
+      function shuffle() {
+        const arr = [...currentOrder];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        currentOrder = arr;
+        render(currentOrder);
+      }
+
+      function reset() {
+        currentOrder = [...originalOrder];
+        render(currentOrder);
+      }
+
+      function loadFromText() {
+        let lines = inputText.value.split(/\n/).map(l => l.trim()).filter(l => l !== '');
+        if (lines.length > 16) lines = lines.slice(0, 16);
+        while (lines.length < 16) lines.push("");
+        originalOrder = [...lines];
+        currentOrder = [...lines];
+        render(currentOrder);
+      }
+
+      shuffleBtn.addEventListener('click', shuffle);
+      resetBtn.addEventListener('click', reset);
+      loadBtn.addEventListener('click', loadFromText);
+
+      render(currentOrder);
+    })();
+  </script>
 </body>
 </html>
