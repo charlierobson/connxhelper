@@ -1,106 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Draggable List from Pasted Text</title>
+  <meta charset="UTF-8">
+  <title>Sortable 4x4 Grid with Touch Support</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 2em;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      margin-top: 50px;
+      touch-action: manipulation; /* Improves touch responsiveness */
     }
-    textarea {
-      width: 100%;
-      height: 150px;
-      margin-bottom: 1em;
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      grid-gap: 10px;
+      width: max-content;
     }
-    ul {
-      list-style-type: none;
-      padding: 0;
+
+    .grid-item {
+      background-color: #4CAF50;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 5px;
+      cursor: grab;
+      user-select: none;
+      touch-action: none; /* Prevents scrolling during drag */
     }
-    li {
-      padding: 10px;
-      margin: 5px 0;
-      background-color: #f0f0f0;
-      border: 1px solid #ccc;
-      cursor: move;
-    }
-    button {
-      margin-top: 1em;
-      padding: 0.5em 1em;
-      font-size: 1em;
+
+    .sortable-ghost {
+      opacity: 0.4;
     }
   </style>
 </head>
 <body>
-  <h1>Paste Text to Create Draggable List</h1>
-  <textarea id="inputText" placeholder="Paste your text here..."></textarea>
-  <br />
-  <button id="processButton">Process Text</button>
-  <button id="resetButton" style="display:none;">Reset</button>
-  <ul id="listContainer" style="display:none;"></ul>
 
-  <!-- ✅ Correct SortableJS script -->
-  https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js
+<div id="grid">
+  <!-- 16 items -->
+  <div class="grid-item">1</div>
+  <div class="grid-item">2</div>
+  <div class="grid-item">3</div>
+  <div class="grid-item">4</div>
+  <div class="grid-item">5</div>
+  <div class="grid-item">6</div>
+  <div class="grid-item">7</div>
+  <div class="grid-item">8</div>
+  <div class="grid-item">9</div>
+  <div class="grid-item">10</div>
+  <div class="grid-item">11</div>
+  <div class="grid-item">12</div>
+  <div class="grid-item">13</div>
+  <div class="grid-item">14</div>
+  <div class="grid-item">15</div>
+  <div class="grid-item">16</div>
+</div>
 
-  <script>
-    console.log("Script loaded");
+<!-- Sortable.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></scripte(document.getElementById('grid'), {
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    touchStartThreshold: 5 // Helps with touch sensitivity
+  });
+</script>
 
-    const inputText = document.getElementById("inputText");
-    const processButton = document.getElementById("processButton");
-    const resetButton = document.getElementById("resetButton");
-    const listContainer = document.getElementById("listContainer");
-
-    processButton.addEventListener("click", () => {
-      console.log("Process button clicked");
-
-      const rawText = inputText.value;
-      console.log("Raw input text:", rawText);
-
-      const lines = rawText
-        .split("\n")
-        .map(line => line.trim())
-        .filter(line => line !== "");
-
-      console.log("Processed lines:", lines);
-
-      if (lines.length === 0) {
-        console.log("No valid lines to process.");
-        return;
-      }
-
-      listContainer.innerHTML = "";
-      lines.forEach((line, index) => {
-        const li = document.createElement("li");
-        li.textContent = line;
-        listContainer.appendChild(li);
-        console.log(`Added line ${index + 1}:`, line);
-      });
-
-      Sortable.create(listContainer, {
-        animation: 150
-      });
-      console.log("Sortable list initialized");
-
-      inputText.style.display = "none";
-      processButton.style.display = "none";
-      listContainer.style.display = "block";
-      resetButton.style.display = "inline-block";
-      console.log("UI updated to show list and reset button");
-    });
-
-    resetButton.addEventListener("click", () => {
-      console.log("Reset button clicked");
-
-      inputText.value = "";
-      inputText.style.display = "block";
-      processButton.style.display = "inline-block";
-      listContainer.style.display = "none";
-      resetButton.style.display = "none";
-      listContainer.innerHTML = "";
-
-      console.log("UI reset to initial state");
-    });
-  </script>
 </body>
 </html>
