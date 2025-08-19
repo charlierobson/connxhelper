@@ -92,6 +92,7 @@
       let currentOrder = [...originalOrder];
       let clickSelected = null;
       let kbSelected = null;
+      let touchStartTile = null;
 
       function render(order) {
         grid.innerHTML = '';
@@ -120,6 +121,20 @@
             swapValues(fromIndex, toIndex);
           });
 
+          // Touch support: tap-hold and drag simulation
+          tile.addEventListener('touchstart', e => {
+            touchStartTile = tile;
+          });
+
+          tile.addEventListener('touchend', e => {
+            if (touchStartTile && touchStartTile !== tile) {
+              const fromIndex = parseInt(touchStartTile.dataset.index);
+              const toIndex = parseInt(tile.dataset.index);
+              swapValues(fromIndex, toIndex);
+            }
+            touchStartTile = null;
+          });
+
           tile.addEventListener('click', () => {
             if (!clickSelected) {
               clickSelected = tile;
@@ -138,8 +153,6 @@
 
           tile.addEventListener('keydown', e => {
             const index = Array.from(grid.children).indexOf(tile);
-            const col = index % 4;
-            const row = Math.floor(index / 4);
 
             if (e.code === 'Space') {
               e.preventDefault();
