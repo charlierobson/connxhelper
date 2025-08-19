@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>4x4 Reorderable Tiles</title>
+  <title>Connectioneer</title>
   <style>
     :root {
       --gap: 12px;
@@ -62,8 +62,7 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>Reorderable 4×4 Tiles</h1>
-    <p>Paste text lines below (blank lines will be removed). Up to 16 lines are used as tiles.</p>
+    <h1>Connectioneer</h1>
 
     <textarea id="inputText" placeholder="Paste your lines here..."></textarea>
 
@@ -76,9 +75,6 @@
 
     <div id="grid" class="grid" role="list" aria-label="Reorderable grid of tiles"></div>
 
-    <footer>
-      Tip: Use <span class="kbd">Tab</span> to focus a tile and <span class="kbd">Space</span> to select; use arrow keys to move selection, then <span class="kbd">Enter</span> to swap.
-    </footer>
   </div>
 
   <script>
