@@ -291,6 +291,8 @@
         originalOrder = [...lines];
         currentOrder = [...lines];
         render(currentOrder);
+        // Clear the input textarea after loading
+        inputText.value = '';
       }
 
       shuffleBtn.addEventListener('click', shuffle);
