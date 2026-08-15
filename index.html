@@ -32,6 +32,7 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: var(--gap);
       user-select: none;
+      width: 100%;
     }
 
     .tile {
@@ -48,7 +49,7 @@
       color: var(--tile-fg);
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       transition: transform .12s ease, background .12s ease, box-shadow .12s ease, outline-color .12s ease;
-      touch-action: none; /* Prevent default scrolling during drag */
+      touch-action: none; /* Allow touch drag handling */
     }
 
     /* Tile text sizing: allow wrapping so sentences can be larger */
@@ -64,72 +65,16 @@
       padding: 0 4px;
     }
 
-    /* Color modes: row-based (default) and column-based (rotated) */
-    /* Exact hex values sampled from the provided screenshot (applied to positions) */
-    .grid.color-mode-row .tile.row-0 { --pos-bg: #C084FC; }
-    .grid.color-mode-row .tile.row-1 { --pos-bg: #93C5FD; }
-    .grid.color-mode-row .tile.row-2 { --pos-bg: #A7F3D0; }
-    .grid.color-mode-row .tile.row-3 { --pos-bg: #FDE68A; }
-
-    .grid.color-mode-col .tile.col-0 { --pos-bg: #C084FC; }
-    .grid.color-mode-col .tile.col-1 { --pos-bg: #93C5FD; }
-    .grid.color-mode-col .tile.col-2 { --pos-bg: #A7F3D0; }
-    .grid.color-mode-col .tile.col-3 { --pos-bg: #FDE68A; }
-
+    /* Drag visuals and selected state */
     .tile[draggable="true"] { cursor: grab; }
     .tile.dragging { opacity: .6; transform: scale(.98); }
     .tile.drop-target { outline: 3px dashed #93c5fd; outline-offset: -6px; }
     .tile.selected { background: var(--tile-active); box-shadow: 0 4px 14px rgba(0,0,0,.08); }
 
+    .grid-wrap { display: block; width: 100%; position: relative; }
+
     footer { margin-top: 16px; font-size: 12px; color: #6b7280; }
     .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 6px; border: 1px solid #e5e7eb; }
-    /* Checkbox overlays for columns (bottom) and rows (right) */
-    .grid-wrap { display: block; width: 100%; position: relative; }
-    .grid { width: 100%; }
-    .col-checks-bottom {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: -44px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--gap);
-      justify-items: center;
-      align-items: center;
-    }
-    .row-checks-right {
-      position: absolute;
-      top: 0;
-      bottom: -0px;
-      right: -44px;
-      display: grid;
-      grid-template-rows: repeat(4, 1fr);
-      gap: var(--gap);
-      align-items: center;
-      justify-items: center;
-      z-index: 10;
-    }
-    .col-checks-bottom input,
-    .row-checks-right input {
-      width: 20px;
-      height: 20px;
-      transform: translateY(0);
-    }
-
-    /* On small screens keep right checks inside the viewport */
-    @media (max-width: 640px) {
-      .row-checks-right {
-        right: 8px;
-      }
-      .col-checks-bottom {
-        bottom: -64px;
-      }
-      .col-checks-bottom input,
-      .row-checks-right input {
-        width: 22px;
-        height: 22px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -142,27 +87,10 @@
       <button id="loadBtn" aria-label="Load tiles from text">Load Tiles</button>
       <button id="shuffleBtn" aria-label="Shuffle tiles">Shuffle</button>
       <button id="rotateBtn" aria-pressed="false" aria-label="Rotate colors 90 degrees">Rotate Colors</button>
-      <button id="swapBtn" disabled aria-label="Swap selected rows or columns">Swap</button>
     </div>
 
     <div class="grid-wrap" style="position:relative; display:inline-block;">
       <div id="grid" class="grid" role="list" aria-label="Reorderable grid of tiles"></div>
-
-      <!-- Bottom: column checkboxes (centered under each column) -->
-      <div class="col-checks-bottom" aria-hidden="false">
-        <input type="checkbox" class="col-check" data-col="0">
-        <input type="checkbox" class="col-check" data-col="1">
-        <input type="checkbox" class="col-check" data-col="2">
-        <input type="checkbox" class="col-check" data-col="3">
-      </div>
-
-      <!-- Right: row checkboxes (centered beside each row) -->
-      <div class="row-checks-right" aria-hidden="false">
-        <input type="checkbox" class="row-check" data-row="0">
-        <input type="checkbox" class="row-check" data-row="1">
-        <input type="checkbox" class="row-check" data-row="2">
-        <input type="checkbox" class="row-check" data-row="3">
-      </div>
     </div>
 
   </div>
@@ -174,11 +102,6 @@
       const loadBtn = document.getElementById('loadBtn');
       const inputText = document.getElementById('inputText');
       const rotateBtn = document.getElementById('rotateBtn');
-      const swapBtn = document.getElementById('swapBtn');
-
-      const rowChecks = Array.from(document.querySelectorAll('.row-check'));
-      const colChecks = Array.from(document.querySelectorAll('.col-check'));
-
 
       const defaultOrder = Array.from({ length: 16 }, () => "");
       let originalOrder = [...defaultOrder];
@@ -191,6 +114,17 @@
       // rotation = number of 90° CCW rotations applied to the color field
       let rotation = 0;
 
+      // compute per-position rotated row after `rotation` CCW steps
+      function computeRotatedRow(r, c, rot) {
+        let rr = r, cc = c;
+        for (let k = 0; k < rot; k++) {
+          const tmp = rr;
+          rr = cc;
+          cc = 3 - tmp;
+        }
+        return rr;
+      }
+
       function render(order) {
         grid.innerHTML = '';
         order.forEach((text, i) => {
@@ -202,8 +136,6 @@
           tile.classList.add(`row-${row}`, `col-${col}`);
           tile.setAttribute('role', 'listitem');
           tile.setAttribute('tabindex', '0');
-          tile.setAttribute('draggable', 'true');
-          tile.dataset.index = i;
 
           // Use inner span for text so we can control sizing
           const span = document.createElement('span');
@@ -212,20 +144,14 @@
           tile.appendChild(span);
 
           // compute per-position color based on current rotation
-          const computeRotatedRow = (r, c, rot) => {
-            let rr = r, cc = c;
-            for (let k = 0; k < rot; k++) {
-              const tmp = rr;
-              rr = cc;
-              cc = 3 - tmp;
-            }
-            return rr;
-          };
-
           const rr = computeRotatedRow(row, col, rotation);
           const colorIndex = 3 - rr; // base mapping: bottom row -> purple (index 0)
           const color = colors[(colorIndex + colors.length) % colors.length];
           tile.style.setProperty('--pos-bg', color);
+
+          // enable tile-level swapping (drag, touch, click, keyboard)
+          tile.setAttribute('draggable', 'true');
+          tile.dataset.index = i;
 
           tile.addEventListener('dragstart', e => {
             tile.classList.add('dragging');
@@ -348,52 +274,6 @@
         render(currentOrder);
       }
 
-      function swapRows(r1, r2) {
-        for (let c = 0; c < 4; c++) {
-          const i1 = r1 * 4 + c;
-          const i2 = r2 * 4 + c;
-          [currentOrder[i1], currentOrder[i2]] = [currentOrder[i2], currentOrder[i1]];
-        }
-        render(currentOrder);
-      }
-
-      function swapCols(c1, c2) {
-        for (let r = 0; r < 4; r++) {
-          const i1 = r * 4 + c1;
-          const i2 = r * 4 + c2;
-          [currentOrder[i1], currentOrder[i2]] = [currentOrder[i2], currentOrder[i1]];
-        }
-        render(currentOrder);
-      }
-
-      function updateSwapState() {
-        const checkedRows = rowChecks.filter(cb => cb.checked).map(cb => parseInt(cb.dataset.row));
-        const checkedCols = colChecks.filter(cb => cb.checked).map(cb => parseInt(cb.dataset.col));
-        const rowsOk = checkedRows.length === 2 && checkedCols.length === 0;
-        const colsOk = checkedCols.length === 2 && checkedRows.length === 0;
-        swapBtn.disabled = !(rowsOk || colsOk);
-      }
-
-      rowChecks.forEach(cb => cb.addEventListener('change', () => { colChecks.forEach(c => c.checked = false); updateSwapState(); }));
-      colChecks.forEach(cb => cb.addEventListener('change', () => { rowChecks.forEach(r => r.checked = false); updateSwapState(); }));
-
-      if (swapBtn) {
-        swapBtn.addEventListener('click', () => {
-          const checkedRows = rowChecks.filter(cb => cb.checked).map(cb => parseInt(cb.dataset.row));
-          const checkedCols = colChecks.filter(cb => cb.checked).map(cb => parseInt(cb.dataset.col));
-          if (checkedRows.length === 2 && checkedCols.length === 0) {
-            swapRows(checkedRows[0], checkedRows[1]);
-            // clear selections
-            rowChecks.forEach(cb => cb.checked = false);
-            updateSwapState();
-          } else if (checkedCols.length === 2 && checkedRows.length === 0) {
-            swapCols(checkedCols[0], checkedCols[1]);
-            colChecks.forEach(cb => cb.checked = false);
-            updateSwapState();
-          }
-        });
-      }
-
       function shuffle() {
         const arr = [...currentOrder];
         for (let i = arr.length - 1; i > 0; i--) {
@@ -404,8 +284,6 @@
         render(currentOrder);
       }
 
-      /* reset() removed — Reset button and behavior intentionally removed */
-
       function loadFromText() {
         let lines = inputText.value.split(/\n/).map(l => l.trim()).filter(l => l !== '');
         if (lines.length > 16) lines = lines.slice(0, 16);
@@ -414,8 +292,6 @@
         currentOrder = [...lines];
         render(currentOrder);
       }
-
-      /* clearAll() removed — Clear button and behavior intentionally removed */
 
       shuffleBtn.addEventListener('click', shuffle);
       loadBtn.addEventListener('click', loadFromText);
@@ -428,7 +304,6 @@
         });
       }
 
-      updateSwapState();
       render(currentOrder);
     })();
   </script>
