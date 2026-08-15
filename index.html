@@ -107,12 +107,28 @@
       gap: var(--gap);
       align-items: center;
       justify-items: center;
+      z-index: 10;
     }
     .col-checks-bottom input,
     .row-checks-right input {
       width: 20px;
       height: 20px;
       transform: translateY(0);
+    }
+
+    /* On small screens keep right checks inside the viewport */
+    @media (max-width: 640px) {
+      .row-checks-right {
+        right: 8px;
+      }
+      .col-checks-bottom {
+        bottom: -64px;
+      }
+      .col-checks-bottom input,
+      .row-checks-right input {
+        width: 22px;
+        height: 22px;
+      }
     }
   </style>
 </head>
