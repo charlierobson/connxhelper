@@ -256,35 +256,43 @@
             let fs = parseFloat(style.fontSize) || 16;
             span.style.fontSize = fs + 'px';
 
-            const paddingH = 8; // leave a bit of padding vertically
-            const tileInnerW = tile.clientWidth - 8; // horizontal padding allowance
+            const paddingH = 8; // vertical padding allowance
             const maxH = tile.clientHeight - paddingH;
+
+            // available width inside the span (account for span padding)
+            const spanStyle = window.getComputedStyle(span);
+            const spanPaddingLeft = parseFloat(spanStyle.paddingLeft) || 0;
+            const spanPaddingRight = parseFloat(spanStyle.paddingRight) || 0;
+            const availableWidth = Math.max(0, span.clientWidth - spanPaddingLeft - spanPaddingRight - 1);
 
             // create a hidden measuring span to measure words without wrapping
             const meas = document.createElement('span');
             meas.style.position = 'absolute';
             meas.style.visibility = 'hidden';
             meas.style.whiteSpace = 'nowrap';
-            meas.style.fontFamily = style.fontFamily;
-            meas.style.fontWeight = style.fontWeight;
+            // use the full computed shorthand font for accurate metrics
+            if (style.font) meas.style.font = style.font;
+            else {
+              meas.style.fontFamily = style.fontFamily;
+              meas.style.fontWeight = style.fontWeight;
+              meas.style.fontSize = fs + 'px';
+            }
             document.body.appendChild(meas);
 
             const words = (text || '').toString().split(/\s+/).filter(Boolean);
             const widestWord = words.reduce((a, b) => (a.length >= b.length ? a : b), words[0] || '');
 
-            // shrink until the widest word fits in one line and total height fits
+            // shrink until the widest word fits inside availableWidth and height fits
             while (fs > 8) {
               meas.style.fontSize = fs + 'px';
-              let widest;
+              let widest = 0;
               if (widestWord) {
                 meas.textContent = widestWord;
                 widest = meas.offsetWidth;
-              } else {
-                widest = 0;
               }
               span.style.fontSize = fs + 'px';
               // if widest word fits and the span height fits, we're good
-              if ((widest <= tileInnerW || widestWord === '') && span.scrollHeight <= maxH) break;
+              if ((widest <= availableWidth || widestWord === '') && span.scrollHeight <= maxH) break;
               fs = Math.max(8, fs - 1);
             }
 
