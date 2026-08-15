@@ -250,16 +250,45 @@
 
           grid.appendChild(tile);
 
-          // Autosize fallback: reduce font-size until text fits both width and height (stop at 8px)
+          // Autosize: shrink text so the widest word fits the tile width
           try {
             const style = window.getComputedStyle(span);
             let fs = parseFloat(style.fontSize) || 16;
             span.style.fontSize = fs + 'px';
-            const maxH = tile.clientHeight - 8; // leave a bit of padding
-            while ((span.scrollHeight > maxH || span.scrollWidth > span.clientWidth) && fs > 8) {
-              fs = Math.max(8, fs - 1);
+
+            const paddingH = 8; // leave a bit of padding vertically
+            const tileInnerW = tile.clientWidth - 8; // horizontal padding allowance
+            const maxH = tile.clientHeight - paddingH;
+
+            // create a hidden measuring span to measure words without wrapping
+            const meas = document.createElement('span');
+            meas.style.position = 'absolute';
+            meas.style.visibility = 'hidden';
+            meas.style.whiteSpace = 'nowrap';
+            meas.style.fontFamily = style.fontFamily;
+            meas.style.fontWeight = style.fontWeight;
+            document.body.appendChild(meas);
+
+            const words = (text || '').toString().split(/\s+/).filter(Boolean);
+            const widestWord = words.reduce((a, b) => (a.length >= b.length ? a : b), words[0] || '');
+
+            // shrink until the widest word fits in one line and total height fits
+            while (fs > 8) {
+              meas.style.fontSize = fs + 'px';
+              let widest;
+              if (widestWord) {
+                meas.textContent = widestWord;
+                widest = meas.offsetWidth;
+              } else {
+                widest = 0;
+              }
               span.style.fontSize = fs + 'px';
+              // if widest word fits and the span height fits, we're good
+              if ((widest <= tileInnerW || widestWord === '') && span.scrollHeight <= maxH) break;
+              fs = Math.max(8, fs - 1);
             }
+
+            document.body.removeChild(meas);
           } catch (e) {
             // ignore sizing errors
           }
@@ -306,7 +335,12 @@
         });
       }
 
-      render(currentOrder);
+      try {
+        render(currentOrder);
+      } catch (err) {
+        console.error('Render error', err);
+        grid.textContent = 'Render error — check console for details';
+      }
     })();
   </script>
 </body>
